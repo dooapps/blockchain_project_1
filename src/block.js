@@ -22,6 +22,14 @@ class Block {
 		this.time = 0;                                              // Timestamp for the Block creation
 		this.previousBlockHash = null;                              // Reference to the previous Block Hash
     }
+
+    set previousBlockHash(value){
+        this._previousBlockHash = value;
+    }
+
+    get previousBlockHash(){
+        return this._previousBlockHash;
+    }
     
     /**
      *  validate() method will validate if the block has been tampered or not.
@@ -38,23 +46,13 @@ class Block {
     validate() {
         let self = this;
         return new Promise((resolve, reject) => {
-            // Save in auxiliary variable the current block hash                                            
-            // Recalculate the hash of the Block
-            // Comparing if the hashes changed
-            // Returning the Block is not valid        
-            // Returning the Block is valid
-            try {
-                // Save in auxiliary variable the current block hash
-                const auxiliary = self.hash;
-                self.hash = null;
-                // Recalculate the hash of the Block
-                self.hash = auxiliary;
-                // Comparing if the hashes changed and return true or false
-                resolve(auxiliary === SHA256(JSON.stringify(self)).toString());
-              } catch (err) {
-                reject(new Error(err)); 
-              }
+            
+            let auxiliary = self.hash;
+            self.hash = null;0
+            let hash = SHA256(JSON.stringify(self));
+            self.hash = auxiliary;
 
+            resolve(auxiliary  && hash && auxiliary.toString() === hash.toString() ? true : false);
         });
     }
 
@@ -68,20 +66,14 @@ class Block {
      *     or Reject with an error.
      */
     getBData() {
-        // Getting the encoded data saved in the Block
-        // Decoding the data to retrieve the JSON representation of the object
-        // Parse the data to an object to be retrieve.
-        // Resolve with the data if the object isn't the Genesis block
-        return new Promise( async (resolve, reject) => {          
-            let data = JSON.parse(hex2ascii(this.body)); // Parse the data to an object to be retrieve.
-            // Resolve with the data if the object isn't the Genesis block
-            if (this.height == 0) {
-                //This is the genesis block as height == 0
-                resolve("Genesis block");
-            } else {
-                resolve(data);
+        let self = this;
+        return new Promise((resolve, reject) => {
+            if (self.height === 0){
+                reject('Genesis Block');
+            }else{
+                resolve(JSON.parse(hex2ascii(this.body)));
             }
-        });
+    });
 
     }
 
