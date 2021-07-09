@@ -64,21 +64,31 @@ class Blockchain {
      */
     _addBlock(block) {
         let self = this;
-        return new Promise(async (resolve) => {
-            block.height = self.chain.length; 
-            block.time = new Date().getTime().toString().slice(0,-3); 
-            if(self.chain.length > 0){
-                block.previousBlockHash = self.chain[self.chain.length-1].hash; 
-            }
-            block.hash = SHA256(JSON.stringify(block)).toString(); 
-            let errors = await self.validateChain(); 
+        return new Promise(async (resolve, reject) => {
+            const errors = await self.validateChain();
+            if (errors.length > 0) {
+                reject("The chain is wrong.");
+            } else {
+                try {
+                    let height = await self.getChainHeight();
+                    if (height === -1) {
+                        block.height = 0;
+                    }
+                    if (height >= 0) {
+                        block.height = height + 1;
+                        const previousBlock = await self.getBlockByHeight(block.height);
+                        block.previousBlockHash = previousBlock.hash;
+                    }
 
-            if (errors.length === 0 ){ 
-                self.chain.push(block); 
-                self.height++; 
-                resolve(block) 
-            }else{
-                resolve(errors);
+                    block.time = new Date().getTime().toString().slice(0, -3);
+                    block.hash = SHA256(JSON.stringify(block)).toString();
+                    this.chain.push(block);
+                    this.height = block.height;
+                    resolve(block);
+                } catch (error) {
+                    //console.log(error);
+                    reject('Not added')
+                }
             }
         });
     }
@@ -198,25 +208,27 @@ class Blockchain {
      */
      validateChain() {
         let self = this;
-        let errorLog = [];
+        let errors = [];
         return new Promise(async (resolve) => {
             let blocks = [];
             self.chain.forEach((block, index) => {
                 if (block.height > 0) {
                     const previousBlock = self.chain[index - 1];
                     if (block.previousBlockHash !== previousBlock.hash) {
-                        errorLog.push(`Block ${index} hash mismatch. previousBlockHash: ${block.previousBlockHash} X previousBlock.hash: ${previousBlock.hash}`);
+                        errors.push(`Invalid Block ${index}: ${block.previousBlockHash} X previousBlock: ${previousBlock.hash}`);
                     }
                 }
                 blocks.push(block.validate());
             })
+            console.log(errors)
             Promise.all(blocks).then(blocks=> {
-                validatedBlocks.forEach((valid, index) => {
+                blocks.forEach((valid, index) => {
                     if (!valid) {
-                        errorLog.push(`Hash ${self.chain[index].hash} is invalid!`)
+                        errors.push(`Hash ${self.chain[index].hash} is invalid!`)
                     }
                 });
-                resolve(errorLog);
+                console.log(errors)
+                resolve(errors);
             });
         });
     }
