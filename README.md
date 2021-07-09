@@ -1,6 +1,9 @@
 # blockchain_project_1
 Education asset only - Udacity Private Blockchain
 
+Nanodegree
+https://www.udacity.com/course/blockchain-developer-nanodegree--nd1309
+
 
 I read some contents and definitions from:
 https://brax.gg/blockchain-developer-lesson-1/ ; 
